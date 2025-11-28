@@ -1,72 +1,51 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+from math import log, sqrt, exp
+from scipy.stats import norm
 
-# ------------------ UI SETUP ------------------
-st.set_page_config(
-    page_title="USD/INR Option Chain",
-    page_icon="💱",
-    layout="wide",
+st.set_page_config(page_title="Forex Options App", page_icon="💹", layout="wide")
+
+# --------------------------- UI HEADER --------------------------- #
+st.markdown(
+    """
+    <h1 style='text-align:center; color:#3A6EA5;'>💹 USD/INR Forex Options App</h1>
+    <h3 style='text-align:center; color:gray;'>Option Chain + Option Calculator</h3>
+    <br>
+    """,
+    unsafe_allow_html=True
 )
 
-st.markdown("""
-    <h1 style='text-align:center; color:#2E86C1;'>💱 USD/INR Forex Option Chain</h1>
-    <p style='text-align:center; font-size:18px;'>
-        Realistic sample option chain for USD/INR with clean UI and smooth experience.
-    </p>
-""", unsafe_allow_html=True)
+# --------------------------- SAMPLE OPTION CHAIN --------------------------- #
+st.subheader("📘 USD/INR Option Chain (Sample Live-Style Data)")
 
-st.divider()
+# Generate sample data
+strikes = np.arange(82, 86.5, 0.5)
+calls_ltp = np.random.uniform(0.10, 1.20, len(strikes))
+puts_ltp = np.random.uniform(0.10, 1.20, len(strikes))
 
-# ------------------ SAMPLE OPTION CHAIN DATA ------------------
-# You can replace this with real API later
+df_chain = pd.DataFrame({
+    "Strike": strikes,
+    "Call LTP": np.round(calls_ltp, 2),
+    "Put LTP": np.round(puts_ltp, 2),
+    "Call OI": np.random.randint(1000, 8000, len(strikes)),
+    "Put OI": np.random.randint(1000, 8000, len(strikes)),
+})
 
-data = {
-    "Strike Price": [82.00, 82.25, 82.50, 82.75, 83.00],
-    "CALL OI": [120000, 150000, 180000, 160000, 110000],
-    "CALL LTP": [0.4500, 0.3800, 0.2900, 0.2100, 0.1500],
-    "CALL Change %": [+1.2, -0.5, +2.1, -1.8, +0.3],
+st.dataframe(df_chain, use_container_width=True)
 
-    "PUT OI": [90000, 130000, 175000, 140000, 100000],
-    "PUT LTP": [0.3000, 0.3500, 0.4200, 0.5100, 0.6300],
-    "PUT Change %": [-0.7, +1.5, +2.0, +1.2, +3.5],
-}
+st.markdown("---")
 
-df = pd.DataFrame(data)
+# --------------------------- OPTION CALCULATOR --------------------------- #
+st.subheader("🧮 Forex Option Calculator (Black–Scholes Model)")
 
-# ------------------ FILTER AREA ------------------
-st.subheader("🔍 Filters")
+col1, col2, col3 = st.columns(3)
 
-col1, col2 = st.columns(2)
+with col1:
+    S = st.number_input("💵 Future Price (USD/INR)", min_value=1.0, value=83.0)
 
-strike_filter = col1.selectbox(
-    "Select Strike Price",
-    options=["All"] + df["Strike Price"].astype(str).tolist(),
-)
+with col2:
+    K = st.number_input("🎯 Strike Price", min_value=1.0, value=83.5)
 
-option_type = col2.selectbox(
-    "Select Option Type",
-    ["All", "CALL", "PUT"]
-)
-
-# ------------------ APPLY FILTERS ------------------
-filtered_df = df.copy()
-
-if strike_filter != "All":
-    filtered_df = filtered_df[filtered_df["Strike Price"] == float(strike_filter)]
-
-if option_type == "CALL":
-    filtered_df = filtered_df[["Strike Price", "CALL OI", "CALL LTP", "CALL Change %"]]
-elif option_type == "PUT":
-    filtered_df = filtered_df[["Strike Price", "PUT OI", "PUT LTP", "PUT Change %"]]
-
-# ------------------ DISPLAY TABLE ------------------
-st.subheader("📊 Option Chain Data")
-
-st.dataframe(filtered_df, use_container_width=True)
-
-# ------------------ FOOTER ------------------
-st.markdown("""
-    <p style='text-align:center; margin-top:40px; color:gray;'>
-        Forex USD/INR Option Chain • Built with Streamlit • Clean UI/UX
-    </p>
-""", unsafe_allow_html=True)
+with col3:
+    T = st.number_input("⏳ Time to Expiry (Years)", min_v
